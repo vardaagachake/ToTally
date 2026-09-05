@@ -6,7 +6,7 @@
 
 ---
 
-##  Judges, start here (2 minutes, zero setup)
+##   start here (2 minutes, zero setup)
 
 You don't need to touch a database or hunt for API keys to see this working. Straight up:
 
