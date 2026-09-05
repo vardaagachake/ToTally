@@ -10,6 +10,7 @@ const navItems = [
   { path: '/ask', label: 'Ask AI', icon: '🤖' },
   { path: '/report', label: 'Closing Report', icon: '📋' },
   { path: '/actions', label: 'Actions Log', icon: '📝' },
+  { path: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 export default function Sidebar() {

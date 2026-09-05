@@ -106,16 +106,20 @@ async function classifyTransactions() {
 }
 
 async function overrideTaxClassification(ledgerId, ruleId) {
+  const mongoose = require('mongoose');
   const rule = await TaxRule.findOne({ ruleId }).lean();
   if (!rule) throw new Error(`Rule ${ruleId} not found`);
 
-  const matchResult = await MatchResult.findOne({ ledgerId }).lean();
+  // Explicitly cast to ObjectId
+  const objectId = new mongoose.Types.ObjectId(ledgerId);
+
+  const matchResult = await MatchResult.findOne({ ledgerId: objectId }).lean();
   
   await MatchResult.findOneAndUpdate(
-    { ledgerId },
+    { ledgerId: objectId },
     {
       $set: {
-        ledgerId,
+        ledgerId: objectId,
         confidence: matchResult ? matchResult.confidence : 'Unmatched',
         taxClassification: {
           gstRate: rule.gstRate,

@@ -64,28 +64,30 @@ async function chat(systemPrompt, userMessage, options = {}) {
 function generateFallbackResponse(systemPrompt, userMessage) {
   // Rule-based fallback when no LLM is available
   const lower = userMessage.toLowerCase();
+  const isDevanagari = /[\u0900-\u097F]/.test(userMessage);
   
-  if (lower.includes('exception') || lower.includes('mismatch') || lower.includes('unmatched')) {
-    return 'This transaction could not be matched. Possible reasons: timing difference between bank processing and ledger entry, bank fees deducted but not recorded in ledger, or a data entry discrepancy. Please review the source documents manually.';
+  if (isDevanagari) {
+    if (lower.includes('दिखाओ') || lower.includes('क्या') || lower.includes('अनमैच्ड')) {
+      return 'यह ट्रांजेक्शन मैच नहीं हो सका। कृपया बैंक स्टेटमेंट और लेज़र में इस राशि की जांच करें। (LLM not configured — using rule-based fallback)';
+    }
+    return 'विश्लेषण पूरा हुआ। अधिक जानकारी के लिए कृपया रिकंसिलिएशन टेबल में ट्रांजेक्शन विवरण की समीक्षा करें। (LLM not configured — using rule-based fallback)';
   }
+
   if (lower.includes('hisab') || lower.includes('rupay') || lower.includes('kaha')) {
-    return 'Is transaction ka hisab check karne ke liye, bank statement aur ledger dono mein ye amount search karein. Agar amount match nahi ho raha, toh bank fees ya timing difference ho sakta hai.';
+    return 'Is transaction ka hisab check karne ke liye, bank statement aur ledger dono mein ye amount search karein. Agar amount match nahi ho raha, toh bank fees ya timing difference ho sakta hai. (LLM not configured — using rule-based fallback)';
+  }
+
+  if (lower.includes('exception') || lower.includes('mismatch') || lower.includes('unmatched')) {
+    return 'This transaction could not be matched. Possible reasons: timing difference between bank processing and ledger entry, bank fees deducted but not recorded in ledger, or a data entry discrepancy. Please review the source documents manually. (LLM not configured — using rule-based fallback)';
   }
   
-  return 'Analysis complete. Please review the transaction details in the reconciliation table for more information. (Note: LLM not configured — using rule-based response)';
+  return 'Analysis complete. Please review the transaction details in the reconciliation table for more information. (LLM not configured — using rule-based response)';
 }
 
 const MULTILINGUAL_SYSTEM_PROMPT = `You are a finance operations AI assistant for the ToTally app. 
 
-CRITICAL LANGUAGE RULES:
-1. Detect the language/script of the user's input automatically.
-2. Reply in the EXACT SAME language and script the user used.
-3. If the user writes in Hinglish (Roman-script Hindi), reply in Hinglish.
-4. If the user writes in Hindi (Devanagari), reply in Devanagari Hindi.
-5. If the user writes in English, reply in English.
-6. Support any language the user writes in — detect and mirror it.
-7. Be concise, specific, and reference exact row numbers, amounts, and transaction IDs.
-
-Example: If user types "ye 200 rupay ka hisab nahi mil raha", reply in Hinglish.`;
+CRITICAL LANGUAGE INSTRUCTION:
+Respond in the same language the user used. If they wrote in Hindi (Devanagari), respond in Hindi. If they wrote in Hinglish (Roman-script Hindi), respond in Hinglish. If they wrote in English, respond in English.
+Do not default to English unless the user wrote in English.`;
 
 module.exports = { chat, getClient, detectProvider, MULTILINGUAL_SYSTEM_PROMPT };

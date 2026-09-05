@@ -9,6 +9,7 @@ import Vendors from './pages/Vendors';
 import AskAI from './pages/AskAI';
 import ClosingReport from './pages/ClosingReport';
 import ActionsLog from './pages/ActionsLog';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/ask" element={<AskAI />} />
             <Route path="/report" element={<ClosingReport />} />
             <Route path="/actions" element={<ActionsLog />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
       </main>

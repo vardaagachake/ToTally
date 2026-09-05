@@ -66,19 +66,23 @@ export default function AskAI() {
   };
 
   const speakText = (text, force = false) => {
-    if ((!voiceEnabled && !force) || !window.speechSynthesis) return;
-    
-    window.speechSynthesis.cancel(); // Cancel any ongoing speech
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Attempt to pick a Hindi voice if we're dealing with Hindi/Hinglish
-    const voices = window.speechSynthesis.getVoices();
-    const hindiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
-    if (hindiVoice && (language === 'hi' || language === 'hinglish' || language === 'auto')) {
-      utterance.voice = hindiVoice;
+    try {
+      if ((!voiceEnabled && !force) || !window.speechSynthesis) return;
+      
+      window.speechSynthesis.cancel(); // Cancel any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(text || '');
+      
+      // Attempt to pick a Hindi voice if we're dealing with Hindi/Hinglish
+      const voices = window.speechSynthesis.getVoices() || [];
+      const hindiVoice = voices.find(v => (v?.lang || '').includes('hi') || (v?.lang || '').includes('IN'));
+      if (hindiVoice && (language === 'hi' || language === 'hinglish' || language === 'auto')) {
+        utterance.voice = hindiVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.error("Speech synthesis error:", err);
     }
-    
-    window.speechSynthesis.speak(utterance);
   };
 
   async function handleSend() {

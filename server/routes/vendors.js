@@ -55,6 +55,13 @@ router.post('/reminder', async (req, res) => {
       paymentLinkUrl: paymentLinkUrl || '#',
     });
 
+    await ActionLog.create({
+      action: 'vendor_reminder_sent',
+      entityType: 'vendor',
+      entityId: invoiceNo,
+      details: { vendor: vendorName, amount, paymentLinkUrl, email: contactEmail },
+    });
+
     res.json({
       success: true,
       emailResult,

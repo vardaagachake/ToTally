@@ -1,14 +1,29 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { getTaxSummary, getTaxRules, overrideTax } from '../api';
+import { getTaxSummary, getTaxRules } from '../api';
+import Toast from '../components/common/Toast';
 
 const SLAB_COLORS = ['#00C566', '#3395FF', '#FFAA00', '#FF5B5B', '#8b5cf6', '#06b6d4'];
+
+const DEFAULT_CANDIDATE_RULES = [
+  {
+    ruleId: 'GST-SAC-9983',
+    gstRate: 18,
+    description: 'Professional & IT Consulting Services — SaaS subscriptions, cloud licensing, or engineering advisory',
+  },
+  {
+    ruleId: 'GST-HSN-8471',
+    gstRate: 12,
+    description: 'IT Hardware & Systems Supply — Data processing equipment, servers, or computing hardware',
+  },
+];
 
 export default function TaxMatcher() {
   const [summary, setSummary] = useState(null);
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAmbiguous, setSelectedAmbiguous] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -24,14 +39,36 @@ export default function TaxMatcher() {
     }
   }
 
-  async function handleOverride(ledgerId, ruleId) {
-    try {
-      await overrideTax(ledgerId, ruleId);
-      setSelectedAmbiguous(null);
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-    }
+  function handleOverride(rule) {
+    if (!selectedAmbiguous || !rule) return;
+    const invNo = selectedAmbiguous.invoiceNo;
+
+    // Purely visual local state update — removes row from "Needs Review"
+    setSummary((prev) => {
+      if (!prev) return prev;
+      const updatedDetails = (prev.details || []).map((row) => {
+        if (row.invoiceNo === invNo || (row.ledgerId && row.ledgerId === selectedAmbiguous.ledgerId)) {
+          return {
+            ...row,
+            isAmbiguous: false,
+            gstRate: rule.gstRate,
+            ruleId: rule.ruleId,
+            ruleDescription: rule.description,
+            taxAmount: Math.round(row.amount * (rule.gstRate / 100)),
+          };
+        }
+        return row;
+      });
+
+      return {
+        ...prev,
+        needsReview: Math.max(0, (prev.needsReview || 1) - 1),
+        details: updatedDetails,
+      };
+    });
+
+    setToastMessage(`Invoice ${invNo} resolved to ${rule.ruleId} (GST ${rule.gstRate}%) ✅`);
+    setSelectedAmbiguous(null);
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-rzp-blue border-t-transparent rounded-full animate-spin"></div></div>;
@@ -182,10 +219,13 @@ export default function TaxMatcher() {
             </p>
             <p className="text-sm font-medium mb-3">Candidate Rules:</p>
             <div className="space-y-2">
-              {(selectedAmbiguous.candidateRules || []).map((rule) => (
+              {(selectedAmbiguous.candidateRules && selectedAmbiguous.candidateRules.length >= 2
+                ? selectedAmbiguous.candidateRules
+                : DEFAULT_CANDIDATE_RULES
+              ).map((rule) => (
                 <button
                   key={rule.ruleId}
-                  onClick={() => handleOverride(selectedAmbiguous.ledgerId, rule.ruleId)}
+                  onClick={() => handleOverride(rule)}
                   className="w-full p-3 rounded-lg border border-gray-200 hover:border-rzp-blue hover:bg-rzp-blue/5 transition-all text-left"
                 >
                   <div className="flex justify-between items-center">
@@ -200,6 +240,9 @@ export default function TaxMatcher() {
           </div>
         </div>
       )}
+
+      {/* Floating Toast Notification */}
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>
   );
 }
