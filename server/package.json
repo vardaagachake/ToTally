@@ -1,0 +1,24 @@
+{
+  "name": "totally-server",
+  "version": "1.0.0",
+  "description": "ToTally Backend API",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "seed": "node seed/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "fuse.js": "^7.0.0",
+    "mongodb-memory-server": "^11.2.0",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^6.9.16",
+    "openai": "^4.77.0",
+    "pdfkit": "^0.15.1",
+    "razorpay": "^2.9.5"
+  }
+}
